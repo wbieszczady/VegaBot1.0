@@ -1,13 +1,9 @@
-import random
-
 import pyautogui
 import win32api, win32con
-import time
-import numpy as np
-import sys, os
+from time import sleep, time
+from numpy import random
 from tkinter import *
-from threading import *
-from pynput import keyboard
+from threading import Thread
 
 class App:
     def __init__(self, gui, fleet, forceRepair, findCooldown):
@@ -40,6 +36,7 @@ class App:
 
         if self.locate('resources/findButton.png'):
 
+            self.status = 'Online'
             self.selectFleet()
             self.freeRepair()
 
@@ -48,26 +45,30 @@ class App:
 
                 self.checkForEvents()
 
-                if not self.locate('resources/fleet.png') and not self.locate('resources/inBattle.png'):
+                if not self.locate('resources/fleet.png') and not self.locate('resources/inBattle.png') and self.locate('resources/game1.png'):
                     self.selectFleet()
+                    sleep(self.random_value(0.3, 0.5))
                     self.freeRepair()
+
+                if not self.locate('resources/game1.png'):
+                    self.status = 'Online'
 
                 if self.locate('resources/findButton.png') and not self.locate('resources/inBattle.png'):
                     self.click(1654, 88)
                     self.status = 'Seeking target...'
-                    time.sleep(self.random(1.0, 1.4))
+                    sleep(self.random_value(1.0, 1.4))
 
                 if self.locate('resources/attack.png') and not self.locate('resources/inBattle.png'):
                     self.click(817, 1010)
                     self.status = 'Fleet is attacking...'
-                    time.sleep(self.random(self.findCooldown+0.1, self.findCooldown+0.5))
+                    sleep(self.random_value(self.findCooldown + 0.1, self.findCooldown + 0.5))
 
                 if self.locate('resources/inBattle.png'):
                     self.status = 'In battle.'
 
 
 
-                time.sleep(self.random(0.3, 0.6))
+                sleep(self.random_value(0.3, 0.6))
 
         else:
             self.isRunning = False
@@ -116,7 +117,7 @@ class App:
 
     def update(self):
 
-        bSeconds = time.time()
+        bSeconds = time()
 
         while self.isRunning:
 
@@ -132,14 +133,16 @@ class App:
                 self.gui.updateLabel.configure(text=self.status, fg='yellow')
             if self.status == 'In battle.':
                 self.gui.updateLabel.configure(text=self.status, fg='#de4d30')
+            if self.status == 'Online':
+                self.gui.updateLabel.configure(text=self.status, fg='#0ed145')
 
-            nSeconds = time.time() - bSeconds
+            nSeconds = time() - bSeconds
             nSeconds = round(nSeconds)
 
             mm, ss = divmod(nSeconds, 60)
             hh, mm = divmod(mm, 60)
 
-            self.gui.timeLabel.configure(text=f'{hh}:{mm}:{ss}')
+            self.gui.timeLabel.configure(text=f'{hh}h {mm}m {ss}s')
 
 
         self.status = 'Offline'
@@ -148,9 +151,9 @@ class App:
 
     def selectFleet(self):
         pyautogui.keyDown(self.fleet)
-        time.sleep(self.random(0.1, 0.3))
+        sleep(self.random_value(0.1, 0.3))
         pyautogui.keyUp(self.fleet)
-        time.sleep(self.random(0.1, 0.3))
+        sleep(self.random_value(0.1, 0.3))
 
     def checkForEvents(self):
 
@@ -167,7 +170,7 @@ class App:
             self.status = 'Fleet repaired. (for free)'
             self.click(955, 924)
 
-        time.sleep(self.random(0.2, 0.4))
+        sleep(self.random_value(0.2, 0.4))
 
     def getStatus(self):
         return self.status
@@ -182,11 +185,11 @@ class App:
 
         win32api.SetCursorPos(pos)
         win32api.mouse_event(win32con.MOUSEEVENTF_LEFTDOWN, 0, 0)
-        time.sleep(self.random(0.2, 0.4))
+        sleep(self.random_value(0.2, 0.4))
         win32api.mouse_event(win32con.MOUSEEVENTF_LEFTUP, 0, 0)
 
-    def random(self, x, y):
-        result = np.random.uniform(x, y)
+    def random_value(self, x, y):
+        result = random.uniform(x, y)
         return result
 
 
@@ -194,6 +197,6 @@ class App:
         print('SHUTTING DOWN')
 
         self.status = 'Offline'
-        time.sleep(1)
+        sleep(1)
         self.isRunning = False
 
