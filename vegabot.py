@@ -16,7 +16,7 @@ class Gui:
         self.root.geometry('500x620')
         self.root.configure(bg='#353535')
         self.root.resizable(False, False)
-        self.root.title('VegaBot v1.0')
+        self.root.title('VegaBot v1.1')
         self.root.iconbitmap('resources/appIcon.ico')
 
         #variables

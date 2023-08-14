@@ -42,33 +42,35 @@ class App:
 
             while self.isRunning:
                 #pyautogui.displayMousePosition()
+                if not self.locate('resources/inBattle.png'):
+                    self.checkForEvents()
 
-                self.checkForEvents()
+                    if not self.locate('resources/fleet.png') and not self.locate('resources/inBattle.png') and self.locate('resources/game1.png'):
+                        self.selectFleet()
+                        sleep(self.random_value(0.3, 0.5))
+                        self.freeRepair()
 
-                if not self.locate('resources/fleet.png') and not self.locate('resources/inBattle.png') and self.locate('resources/game1.png'):
-                    self.selectFleet()
-                    sleep(self.random_value(0.3, 0.5))
-                    self.freeRepair()
+                    if not self.locate('resources/game1.png'):
+                        self.status = 'Online'
 
-                if not self.locate('resources/game1.png'):
-                    self.status = 'Online'
+                    if self.locate('resources/findButton.png') and not self.locate('resources/inBattle.png'):
+                        self.click(1654, 88)
+                        self.status = 'Seeking target...'
+                        sleep(self.random_value(1.0, 1.4))
 
-                if self.locate('resources/findButton.png') and not self.locate('resources/inBattle.png'):
-                    self.click(1654, 88)
-                    self.status = 'Seeking target...'
-                    sleep(self.random_value(1.0, 1.4))
+                    if self.locate('resources/attack.png') and not self.locate('resources/inBattle.png'):
+                        self.click(817, 1010)
+                        self.status = 'Fleet is attacking...'
+                        sleep(self.random_value(self.findCooldown + 0.1, self.findCooldown + 0.5))
 
-                if self.locate('resources/attack.png') and not self.locate('resources/inBattle.png'):
-                    self.click(817, 1010)
-                    self.status = 'Fleet is attacking...'
-                    sleep(self.random_value(self.findCooldown + 0.1, self.findCooldown + 0.5))
-
-                if self.locate('resources/inBattle.png'):
+                    if self.locate('resources/inBattle.png'):
+                        self.status = 'In battle.'
+                else:
                     self.status = 'In battle.'
 
 
 
-                sleep(self.random_value(0.3, 0.6))
+                sleep(self.random_value(0.6, 0.9))
 
         else:
             self.isRunning = False
@@ -144,6 +146,7 @@ class App:
 
             self.gui.timeLabel.configure(text=f'{hh}h {mm}m {ss}s')
 
+            sleep(1)
 
         self.status = 'Offline'
         self.gui.updateLabel.configure(text=self.status, fg='red')
