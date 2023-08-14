@@ -108,7 +108,6 @@ class Gui:
     def onClose(self):
         if self.isRunning:
             self.app.isRunning = False
-        sleep(1)
         self.root.destroy()
 
 if __name__ == '__main__':
