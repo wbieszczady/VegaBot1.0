@@ -1,190 +1,199 @@
 import pyautogui
 import win32api, win32con
 from time import sleep, time
-from numpy import random
+from numpy import random, array
 from tkinter import *
 from threading import Thread
+import cv2
 
 class App:
-    def __init__(self, gui, fleet, forceRepair, findCooldown):
+    def __init__(self, gui, resolution, fleet, findCooldown, forceRepair):
 
         self.gui = gui
-
-        self.inBattle = False
+        self.resolution = resolution
         self.fleet = fleet
-        self.forceRepair = forceRepair
         self.findCooldown = findCooldown
-        self.status = 'Offline'
-        self.count = 0
+        self.forceRepair = forceRepair
 
         self.isRunning = True
+
+        match self.resolution:
+            case '1920x1080':
+                self.pos = {'repair': [(955, 924)],
+                            'blitz': [(1436, 187)],
+                            }
+                self.images = {'attack': 'resources/1920x1080/attack.png',
+                               'repair': 'resources/1920x1080/freeRepair.png',
+                               'inBattle': 'resources/1920x1080/inBattle.png',
+                               'alert': 'resources/1920x1080/alert.png',
+                               'blitz': 'resources/1920x1080/blitzAlert.png',
+                               'game': 'resources/1920x1080/game.png',
+                               'find': 'resources/1920x1080/findButton.png',
+                               'join': 'resources/1920x1080/join.png'
+                               }
+
+            case '2560x1440':
+                self.pos = {'repair': [(955, 924)],
+                            'blitz': [(1915, 240)],
+                            }
+
+                self.images = {'attack': 'resources/2560x1440/attack.png',
+                               'repair': 'resources/2560x1440/freeRepair.png',
+                               'inBattle': 'resources/2560x1440/inBattle.png',
+                               'alert': 'resources/2560x1440/alert.png',
+                               'blitz': 'resources/2560x1440/blitzAlert.png',
+                               'game': 'resources/2560x1440/game.png',
+                               'find': 'resources/2560x1440/findButton.png',
+                               'join': 'resources/2560x1440/join.png'
+                               }
 
         self.mainThread = Thread(target=self.run)
         self.mainThread.start()
 
-        self.updateThread = Thread(target=self.update)
-        self.updateThread.start()
-
-
-        #TODO make monitor
-
-        # self.obsThread = Thread(target=self.monitor)
-        # self.obsThread.start()
-
 
     def run(self):
 
-        if self.locate('resources/findButton.png'):
+        self.gui.status = 'Online'
+        self.gui.time = time()
+        self.gui.refresh()
 
-            self.status = 'Online'
-            self.selectFleet()
-            self.freeRepair()
-
-            while self.isRunning:
-                #pyautogui.displayMousePosition()
-                if not self.locate('resources/inBattle.png'):
-                    self.checkForEvents()
-
-                    if not self.locate('resources/fleet.png') and not self.locate('resources/inBattle.png') and self.locate('resources/game1.png'):
-                        self.selectFleet()
-                        sleep(self.random_value(0.3, 0.5))
-                        self.freeRepair()
-
-                    if not self.locate('resources/game1.png'):
-                        self.status = 'Online'
-
-                    if self.locate('resources/findButton.png') and not self.locate('resources/inBattle.png'):
-                        self.click(1654, 88)
-                        self.status = 'Seeking target...'
-                        sleep(self.random_value(1.0, 1.4))
-
-                    if self.locate('resources/attack.png') and not self.locate('resources/inBattle.png'):
-                        self.click(817, 1010)
-                        self.status = 'Fleet is attacking...'
-                        sleep(self.random_value(self.findCooldown + 0.1, self.findCooldown + 0.5))
-
-                    if self.locate('resources/inBattle.png'):
-                        self.status = 'In battle.'
-                else:
-                    self.status = 'In battle.'
-
-
-
-                sleep(self.random_value(0.6, 0.9))
-
+        if self.locate(self.images['game']) and self.locate(self.images['find']):
+            find = self.locate(self.images['find'])
         else:
-            self.isRunning = False
-
-    def monitor(self):
-
-        cnt = 0
-
-        while self.isRunning:
-
-            cnt = time.time()
-
-            if self.locate('resources/alert.png') != None:
-                self.visuals['alert'] = self.locate('resources/alert.png')
-            else:
-                self.visuals['alert'] = False
-
-            if self.locate('resources/findButton.png') != None:
-                self.visuals['find'] = self.locate('resources/findButton.png')
-            else:
-                self.visuals['find'] = False
-
-            if self.locate('resources/inBattle.png') != None:
-                self.visuals['join'] = self.locate('resources/inBattle.png')
-            else:
-                self.visuals['join'] = False
-
-            if self.locate('resources/attack.png') != None:
-                self.visuals['attack'] = self.locate('resources/attack.png')
-            else:
-                self.visuals['attack'] = False
-
-            if self.locate('resources/freeRepair.png') != None:
-                self.visuals['repair'] = self.locate('resources/freeRepair.png')
-            else:
-                self.visuals['repair'] = False
-
-            new = time.time() - cnt
+            self.exit()
 
 
-            print(self.visuals)
-            print(new)
+        while self.isRunning: #main loop
 
-        print('monitor stopped')
-        self.exit()
+            self.checkForEvents()
 
-    def update(self):
+            inbattle = self.locate(self.images['inBattle'])
 
-        bSeconds = time()
-
-        while self.isRunning:
-
-            #TODO get this fucking thing to match case
-
-            if self.status == 'Offline':
-                self.gui.updateLabel.configure(text=self.status, fg='red')
-            if self.status == 'Seeking target...':
-                self.gui.updateLabel.configure(text=self.status, fg='orange')
-            if self.status == 'Fleet is attacking...':
-                self.gui.updateLabel.configure(text=self.status, fg='orange')
-            if self.status == 'Fleet repaired. (for free)':
-                self.gui.updateLabel.configure(text=self.status, fg='yellow')
-            if self.status == 'In battle.':
-                self.gui.updateLabel.configure(text=self.status, fg='#de4d30')
-            if self.status == 'Online':
-                self.gui.updateLabel.configure(text=self.status, fg='#0ed145')
-
-            nSeconds = time() - bSeconds
-            nSeconds = round(nSeconds)
-
-            mm, ss = divmod(nSeconds, 60)
-            hh, mm = divmod(mm, 60)
-
-            self.gui.timeLabel.configure(text=f'{hh}h {mm}m {ss}s')
-
-            sleep(1)
-
-        self.status = 'Offline'
-        self.gui.updateLabel.configure(text=self.status, fg='red')
+            if inbattle == None:
+                inbattle = []
 
 
-    def selectFleet(self):
-        pyautogui.keyDown(self.fleet)
+            inGame = self.locate(self.images['game'])
+
+            print(inbattle)
+
+            if len(self.fleet) != len(inbattle) and inGame != None:
+
+                for number in self.fleet:
+                    if self.locate(self.images['game']) != None:
+
+                        self.selectFleet(number)
+
+                        sleep(self.random_value(0.4, 0.8))
+
+                        skip = self.locate(self.images['join'])
+
+                        if skip == None:
+
+                            self.freeRepair()
+
+                            self.gui.status = 'Seeking target...'
+                            self.click(find)
+
+                            sleep(self.random_value(0.4, 0.8))
+
+                            attack = self.locate(self.images['attack'])
+                            if attack != None:
+                                self.gui.status = 'Fleet is attacking...'
+                                self.click(attack)
+                            sleep(self.random_value(0.4, 0.8))
+
+
+            elif len(self.fleet) == len(inbattle):
+                self.gui.status = 'In battle.'
+            elif inGame == None:
+                self.gui.status = 'Online'
+
+            #check cooldown
+            sleep(self.findCooldown/2)
+
+
+    def selectFleet(self, fleet):
+        pyautogui.keyDown(fleet)
         sleep(self.random_value(0.1, 0.3))
-        pyautogui.keyUp(self.fleet)
+        pyautogui.keyUp(fleet)
         sleep(self.random_value(0.1, 0.3))
 
     def checkForEvents(self):
 
-        if self.locate('resources/alert.png') != None:
-            self.click(960, 666)
-            self.status = 'Fleet not found.'
+        alert = self.locate(self.images['alert'])
+        blitz = self.locate(self.images['blitz'])
 
-        if self.locate('resources/blitzAlert.png') != None:
-            self.click(1436, 187)
-            self.status = 'Blitz skipped.'
+        if alert != None:
+            self.click(alert)
+
+        if blitz != None:
+            self.click(self.pos['blitz'])
 
     def freeRepair(self):
-        if self.locate('resources/freeRepair.png', True, 0.9) != None:
-            self.status = 'Fleet repaired. (for free)'
-            self.click(955, 924)
 
-        sleep(self.random_value(0.2, 0.4))
+        repair = self.locate(self.images['repair'], True, 0.9)
+        if repair != None:
+            self.gui.status = 'Fleet repaired. (for free)'
+            self.click(repair)
+        elif self.forceRepair:
+            self.click(self.pos['repair'])
 
-    def getStatus(self):
-        return self.status
+        sleep(self.random_value(0.3, 0.5))
 
-    def locate(self, img, grays=True, conf=0.8):
-        return pyautogui.locateOnScreen(img, grayscale=grays, confidence=conf)
+    def locate(self, img, grays=True, conf=0.82):
+
+        located = []
+        threshold = 15
+        for box in pyautogui.locateAllOnScreen(img, grayscale=grays, confidence=conf):
+
+            passed = True
+
+            if len(located) == 0:
+
+                located.append(box)
+
+            else:
+
+                for loc in located:
+
+                    leftDiff = abs(box.left - loc.left)
+                    topDiff = abs(box.top - loc.top)
+
+                    if topDiff > threshold:
+                        print(f'PASSED: {box} with {loc}')
+                        passed = True
+
+                    else:
+                        print(f'NOT PASSED: {box} with {loc}')
+                        passed = False
+                        break
+
+                if passed:
+                    located.append(box)
+                else:
+                    print('DISCARDED.')
+
+        else:
+            print('Nothing found')
+
+        if len(located) == 0:
+            return None
+        else:
+            prod = []
+            for loc in located:
+                pos = pyautogui.center(loc)
+                prod.append((pos[0], pos[1]))
+
+            return prod
 
 
-    def click(self, x, y):
+    def click(self, tuple):
 
-        pos = random.randint(x-10, x+10), random.randint(y-10, y+10)
+        baseX = tuple[0][0]
+        baseY = tuple[0][1]
+
+        pos = random.randint(baseX-10, baseX+10), random.randint(baseY-10, baseY+10)
 
         win32api.SetCursorPos(pos)
         win32api.mouse_event(win32con.MOUSEEVENTF_LEFTDOWN, 0, 0)
@@ -197,9 +206,6 @@ class App:
 
 
     def exit(self):
-        print('SHUTTING DOWN')
-
-        self.status = 'Offline'
-        sleep(1)
+        self.gui.status = 'Offline'
         self.isRunning = False
-
+        self.gui.isRunning = False

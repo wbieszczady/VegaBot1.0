@@ -1,2 +1,2 @@
 @echo off
-py gui.py
+py vegabot.py

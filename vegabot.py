@@ -1,116 +1,199 @@
+import tkinter
+import customtkinter
 from instructions import App
 from tkinter import *
 from threading import Thread
 from keyboard import add_hotkey
-from time import sleep
+from time import sleep, time
 
-class Gui:
+class Gui(customtkinter.CTk):
     def __init__(self):
+        super().__init__()
 
-        self.FLEETS = ['1', '2', '3', '4', '5', '6', '7']
+        self.RESOLUTIONS = ['1920x1080', '2560x1440']
+        self.STYLES = ['Light', 'Dark']
+
         self.REPAIR = ['True', 'False']
-        self.COOLDOWNS = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11']
 
         # window init
-        self.root = Tk()
-        self.root.geometry('500x620')
-        self.root.configure(bg='#353535')
-        self.root.resizable(False, False)
-        self.root.title('VegaBot v1.1')
-        self.root.iconbitmap('resources/appIcon.ico')
+        self.geometry('700x800')
+        self.resizable(False, False)
+        self.title('VegaBot v1.2')
+        self.iconbitmap('resources/appIcon.ico')
+
+        customtkinter.set_appearance_mode("Dark")
+        customtkinter.set_default_color_theme("green")
 
         #variables
-        self.fleet = StringVar(self.root)
-        self.fleet.set(self.FLEETS[0])
+        self.resolution = StringVar(self)
+        self.resolution.set(self.RESOLUTIONS[0])
 
-        self.repair = StringVar(self.root)
+        self.style = StringVar(self)
+        self.style.set(self.STYLES[1])
+
+        self.repair = StringVar(self)
         self.repair.set(self.REPAIR[1])
 
-        self.cooldown = StringVar(self.root)
-        self.cooldown.set(self.COOLDOWNS[3])
-
         #widgets init
+        self.font = 'Verdana'
+        self.labels = []
+        self.frames = []
+        self.menus = []
+        self.sliders = []
+        self.switches = []
+        self.boxes = []
 
-        self.selectFrame = Frame(master=self.root, bg='#252525', width=460, height=235)
-
-        self.fleetLabel = Label(master=self.root, text='Select a fleet', bg='#353535', fg='white', font=('Arial', 18))
-        self.fleetEntry = OptionMenu(self.root, self.fleet, *self.FLEETS)
-
-        self.repairLabel = Label(master=self.root, text='Force repair', bg='#353535', fg='white', font=('Arial', 18))
-        self.repairEntry = OptionMenu(self.root, self.repair, *self.REPAIR)
-
-        self.cooldownLabel = Label(master=self.root, text='Finding cooldown', bg='#353535', fg='white', font=('Arial', 18))
-        self.cooldownEntry = OptionMenu(self.root, self.cooldown, *self.COOLDOWNS)
-
-        self.statusFrame = Frame(master=self.root, bg='#252525', width=460, height=315)
-        self.statusLabel = Label(master=self.root, text='Status:', bg='#252525', fg='white', font=('Arial', 20))
-
-        self.updateLabel = Label(master=self.root, text='Offline', bg='#252525', fg='red', font=('Arial', 20))
-
-        self.timeLabel = Label(master=self.root, text=f'0h 0m 0s', bg='#252525', fg='white', font=('Arial', 20))
-
-        self.infoLabel = Label(master=self.root, text='SPACE', bg='#353535', fg='#0ed145', font=('Arial', 16))
-        self.infoLabel2 = Label(master=self.root, text='BACKSPACE', bg='#353535', fg='red', font=('Arial', 16))
-
-        #widgets config
-        self.fleetEntry.configure(bg='#252525', fg='white', width=10, height=1, font=('Arial', 18))
-        self.fleetEntry["menu"].configure(bg='#252525', fg='white')
-        self.fleetEntry["highlightthickness"]=0
-
-        self.repairEntry.configure(bg='#252525', fg='white', width=10, height=1, font=('Arial', 18))
-        self.repairEntry["menu"].configure(bg='#252525', fg='white')
-        self.repairEntry["highlightthickness"] = 0
-
-        self.cooldownEntry.configure(bg='#252525', fg='white', width=10, height=1, font=('Arial', 18))
-        self.cooldownEntry["menu"].configure(bg='#252525', fg='white')
-        self.cooldownEntry["highlightthickness"] = 0
+        self.place()
 
         #controls
         self.isRunning = False
+        self.time = time()
+        self.status = 'Offline'
+
+    def refresh(self):
+
+
+        nSeconds = time() - self.time
+        nSeconds = round(nSeconds)
+
+        mm, ss = divmod(nSeconds, 60)
+        hh, mm = divmod(mm, 60)
+
+        self.labels[7].configure(text=f'{hh}h {mm}m {ss}s')
+
+        #status
+        match self.status:
+            case 'Offline':
+                self.labels[6].configure(text=self.status, text_color='red')
+            case 'Seeking target...':
+                self.labels[6].configure(text=self.status, text_color='orange')
+            case 'Fleet is attacking...':
+                self.labels[6].configure(text=self.status, text_color='orange')
+            case 'Fleet repaired. (for free)':
+                self.labels[6].configure(text=self.status, text_color='yellow')
+            case 'In battle.':
+                self.labels[6].configure(text=self.status, text_color='#de4d30')
+            case 'Online':
+                self.labels[6].configure(text=self.status, text_color='#0ed145')
+
+        if self.isRunning:
+            self.after(1000, lambda: self.refresh())
+        else:
+            self.status = 'Offline'
+            self.labels[6].configure(text=self.status, text_color='red')
+
+    def place(self):
+
+        self.createFrame(20, 20, 660, 135) # General settings
+        self.createLabel(self.frames[0], 260, 10, 'General settings', 18)
+        self.createMenu(self.frames[0], 170, 60, 150, 35, 18, self.resolution, *self.RESOLUTIONS)
+        self.createButton(self.frames[0], 350, 60, 150, 35, 'Toggle mode', 18)
+
+
+        self.createFrame(20, 165, 660, 325)  #Commons settings
+        self.createLabel(self.frames[1], 155, 10, 'Common settings', 18)
+
+        self.createLabel(self.frames[1], 20, 60, 'Finding cooldown', 18)
+        self.createSlider(self.frames[1], 200, 67)
+
+        self.createLabel(self.frames[1], 20, 100, 'Force repair', 18)
+        self.createSwitch(self.frames[1], 160, 105)
+
+        self.createSubFrame(self.frames[1], 450, 0, 210, 325)
+
+        self.createLabel(self.frames[2], 80, 10, 'Fleet', 18)
+
+        self.createCheckbox(self.frames[2], '1', 55, 50)
+        self.createCheckbox(self.frames[2], '2', 55, 85)
+        self.createCheckbox(self.frames[2], '3', 55, 120)
+        self.createCheckbox(self.frames[2], '4', 55, 155)
+        self.createCheckbox(self.frames[2], '5', 55, 190)
+        self.createCheckbox(self.frames[2], '6', 55, 225)
+        self.createCheckbox(self.frames[2], '7', 55, 260)
+
+
+        self.createFrame(20, 500, 660, 280) # Footer
+
+        self.createLabel(self.frames[3], 300, 10, 'Status', 18)
+        self.createLabel(self.frames[3], 20, 60, 'Offline', 18)
+        self.labels[6].configure(text_color='red')
+
+        self.createLabel(self.frames[3], 20, 90, '0h 0m 0s', 18)
 
     def submit(self):
 
-        if not self.isRunning:
+        self.fleet = []
+
+        for box in self.boxes:
+            if box.get() != False:
+                self.fleet.append(box.get())
+
+        if not self.isRunning and len(self.fleet) > 0:
+
+            var1 = self.resolution.get()
+            var2 = self.fleet
+            var3 = self.sliders[0].get()
+            var4 = self.switches[0].get()
 
             self.isRunning = True
-            self.app = App(self, self.fleet.get(), bool(self.repair.get()), int(self.cooldown.get()))
+            self.app = App(self, var1, var2, var3, var4)
 
-    def place(self):
-        self.selectFrame.place(x=20, y=20)
+    def changeStyle(self):
+        if self.style.get() == 'Dark':
+            customtkinter.set_appearance_mode("Light")
+            self.style.set(self.STYLES[0])
+        else:
+            customtkinter.set_appearance_mode("Dark")
+            self.style.set(self.STYLES[1])
 
-        self.fleetLabel.place(x=30, y=35)
-        self.fleetEntry.place(x=290, y=30)
-        self.repairLabel.place(x=30, y=120)
-        self.repairEntry.place(x=290, y=115)
-        self.cooldownLabel.place(x=30, y=200)
-        self.cooldownEntry.place(x=290, y=195)
+    def createLabel(self, master, x, y, text, fontsize):
+        object = customtkinter.CTkLabel(master=master, text=text, font=(self.font, fontsize))
+        object.place(x=x, y=y)
+        self.labels.append(object)
+    def createFrame(self, x, y, w, h):
+        object = customtkinter.CTkFrame(master=self, width=w, height=h, corner_radius=10)
+        object.place(x=x, y=y)
+        self.frames.append(object)
+    def createSubFrame(self, master, x, y, w, h):
+        object = customtkinter.CTkFrame(master=master, width=w, height=h, corner_radius=0)
+        object.place(x=x, y=y)
+        self.frames.append(object)
+    def createMenu(self, master, x, y, w, h, fontsize, variable, *variableOptions):
+        object = customtkinter.CTkOptionMenu(master=master, variable=variable, values=variableOptions,width=w, height=h, corner_radius=0, dropdown_font=(self.font, fontsize), font=(self.font, fontsize))
+        object.place(x=x, y=y)
+        self.menus.append(object)
+    def createButton(self, master, x, y, w, h, text, fontsize):
+        object = customtkinter.CTkButton(master=master, width=w, height=h, text=text, corner_radius=0, font=(self.font, fontsize), command=lambda: self.changeStyle())
+        object.place(x=x, y=y)
 
-        self.statusFrame.place(x=20, y=280)
-        self.statusLabel.place(x=40, y=300)
-        self.updateLabel.place(x=40, y=340)
-
-        self.infoLabel.place(x=230, y=555)
-        self.infoLabel2.place(x=330, y=555)
-
-        self.timeLabel.place(x=40, y=550)
+    def createSlider(self, master, x, y):
+        object = customtkinter.CTkSlider(master=master, from_=1, to=11, orientation='horizontal', number_of_steps=10)
+        object.place(x=x, y=y)
+        self.sliders.append(object)
+    def createSwitch(self, master, x, y):
+        object = customtkinter.CTkSwitch(master=master, onvalue=True, offvalue=False, text='')
+        object.place(x=x, y=y)
+        self.switches.append(object)
+    def createCheckbox(self, master, value, x, y):
+        object = customtkinter.CTkCheckBox(master=master, onvalue=value, offvalue=False, text=value, font=(self.font, 18), checkbox_width=100)
+        object.place(x=x, y=y)
+        self.boxes.append(object)
 
     def run(self):
-        self.root.protocol("WM_DELETE_WINDOW", self.onClose)
+        self.protocol("WM_DELETE_WINDOW", self.onClose)
         add_hotkey('backspace', lambda: self.stop())
         add_hotkey('space', lambda: self.submit())
-        self.root.mainloop()
+        self.mainloop()
 
     def stop(self):
         if self.isRunning:
-            self.app.isRunning = False
+            self.app.exit()
             self.isRunning = False
 
     def onClose(self):
-        if self.isRunning:
-            self.app.isRunning = False
-        self.root.destroy()
+        self.stop()
+        self.destroy()
 
 if __name__ == '__main__':
     gui = Gui()
-    gui.place()
     gui.run()
