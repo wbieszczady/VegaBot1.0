@@ -59,13 +59,13 @@ class App:
 
         if self.locate(self.images['game']) and self.locate(self.images['find']):
             find = self.locate(self.images['find'])
+            self.gui.writeLogFile('Script has started!')
         else:
+            self.gui.writeLogFile('Couldnt find game!')
             self.exit()
 
 
         while self.isRunning: #main loop
-
-            self.checkForEvents()
 
             inbattle = self.locate(self.images['inBattle'])
 
@@ -73,11 +73,9 @@ class App:
                 inbattle = []
 
 
-            inGame = self.locate(self.images['game'])
+            if len(self.fleet) != len(inbattle):
 
-            print(inbattle)
-
-            if len(self.fleet) != len(inbattle) and inGame != None:
+                self.checkForEvents()
 
                 for number in self.fleet:
                     if self.locate(self.images['game']) != None:
@@ -103,11 +101,11 @@ class App:
                                 self.click(attack)
                             sleep(self.random_value(0.4, 0.8))
 
+                    else:
+                        self.gui.status = 'Online'
 
-            elif len(self.fleet) == len(inbattle):
+            else:
                 self.gui.status = 'In battle.'
-            elif inGame == None:
-                self.gui.status = 'Online'
 
             #check cooldown
             sleep(self.findCooldown/2)
@@ -134,14 +132,14 @@ class App:
 
         repair = self.locate(self.images['repair'], True, 0.9)
         if repair != None:
-            self.gui.status = 'Fleet repaired. (for free)'
+            self.gui.status = 'Fleet repaired.'
             self.click(repair)
         elif self.forceRepair:
             self.click(self.pos['repair'])
 
         sleep(self.random_value(0.3, 0.5))
 
-    def locate(self, img, grays=True, conf=0.82):
+    def locate(self, img, grays=True, conf=0.75):
 
         located = []
         threshold = 15
@@ -161,32 +159,27 @@ class App:
                     topDiff = abs(box.top - loc.top)
 
                     if topDiff > threshold:
-                        print(f'PASSED: {box} with {loc}')
                         passed = True
 
                     else:
-                        print(f'NOT PASSED: {box} with {loc}')
                         passed = False
                         break
 
                 if passed:
                     located.append(box)
-                else:
-                    print('DISCARDED.')
 
         else:
-            print('Nothing found')
+            pass
 
         if len(located) == 0:
             return None
         else:
-            prod = []
+            final = []
             for loc in located:
                 pos = pyautogui.center(loc)
-                prod.append((pos[0], pos[1]))
+                final.append((pos[0], pos[1]))
 
-            return prod
-
+            return final
 
     def click(self, tuple):
 
