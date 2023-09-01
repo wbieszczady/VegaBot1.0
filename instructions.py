@@ -2,9 +2,7 @@ import pyautogui
 import win32api, win32con
 from time import sleep, time
 from numpy import random, array
-from tkinter import *
 from threading import Thread
-import cv2
 
 class App:
     def __init__(self, gui, resolution, fleet, findCooldown, forceRepair):
@@ -61,7 +59,7 @@ class App:
             find = self.locate(self.images['find'])
             self.gui.writeLogFile('Script has started!')
         else:
-            self.gui.writeLogFile('Couldnt find game!')
+            self.gui.writeLogFile('Couldnt find game on screen!')
             self.exit()
 
 

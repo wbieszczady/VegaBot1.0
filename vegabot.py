@@ -1,8 +1,6 @@
 import datetime
-import tkinter
 import customtkinter
 from instructions import App
-from tkinter import *
 from threading import Thread
 from keyboard import add_hotkey
 import os
@@ -14,31 +12,36 @@ class Gui(customtkinter.CTk):
 
         self.RESOLUTIONS = ['1920x1080', '2560x1440']
         self.STYLES = ['Light', 'Dark']
+        self.SIZES = ['Small', 'Big']
 
         self.REPAIR = ['True', 'False']
         self.DEV = ['True', 'False']
 
+
         # window init
         self.geometry('700x800')
         self.resizable(False, False)
-        self.title('VegaBot v1.2')
+        self.title('VegaBot v1.3')
         self.iconbitmap('resources/appIcon.ico')
 
         customtkinter.set_appearance_mode("Dark")
         customtkinter.set_default_color_theme("green")
 
         #variables
-        self.resolution = StringVar(self)
+        self.resolution = customtkinter.StringVar(self)
         self.resolution.set(self.RESOLUTIONS[0])
 
-        self.style = StringVar(self)
+        self.style = customtkinter.StringVar(self)
         self.style.set(self.STYLES[1])
 
-        self.repair = StringVar(self)
+        self.repair = customtkinter.StringVar(self)
         self.repair.set(self.REPAIR[1])
 
-        self.dev = StringVar(self)
+        self.dev = customtkinter.StringVar(self)
         self.dev.set(self.DEV[1])
+
+        self.msize = customtkinter.StringVar(self)
+        self.msize.set(self.SIZES[1])
 
         #widgets init
         self.font = 'Verdana'
@@ -97,8 +100,9 @@ class Gui(customtkinter.CTk):
 
         self.createFrame(20, 20, 660, 135) # General settings
         self.createLabel(self.frames[0], 260, 10, 'General settings', 18)
-        self.createMenu(self.frames[0], 170, 60, 150, 35, 18, self.resolution, *self.RESOLUTIONS)
-        self.createButton(self.frames[0], 350, 60, 150, 35, 'Toggle mode', 18, lambda: self.changeStyle())
+        self.createMenu(self.frames[0], 95, 60, 150, 35, 18, self.resolution, *self.RESOLUTIONS)
+        self.createButton(self.frames[0], 255, 60, 150, 35, 'Toggle mode', 18, lambda: self.changeStyle())
+        self.createButton(self.frames[0], 415, 60, 150, 35, 'Toggle size', 18, lambda:self.changeSize())
 
         self.createFrame(20, 165, 660, 325)  #Commons settings
         self.createLabel(self.frames[1], 155, 10, 'Common settings', 18)
@@ -114,8 +118,8 @@ class Gui(customtkinter.CTk):
         self.createLabel(self.frames[1], 20, 180, 'Force repair', 18)
         self.createSwitch(self.frames[1], 160, 184)
 
-        self.createLabel(self.frames[1], 20, 220, 'Dev mode', 18)
-        self.createSwitch(self.frames[1], 140, 225, lambda: self.changeDev())
+        self.createLabel(self.frames[1], 20, 220, 'Debug mode', 18)
+        self.createSwitch(self.frames[1], 160, 225, lambda: self.changeDev())
 
         self.createSubFrame(self.frames[1], 450, 0, 210, 325)
 
@@ -139,6 +143,9 @@ class Gui(customtkinter.CTk):
 
         self.createLabel(self.frames[4], 15, 240, '0h 0m 0s', 18)
         self.createCon(self.frames[3], 210, 0, 420, 270)
+
+        self.createLabel(self.frames[1], 20, 260, 'Remember to turn on AI mode...', 13)
+
 
     def createLogFile(self):
 
@@ -199,7 +206,6 @@ class Gui(customtkinter.CTk):
 
     def changeDev(self):
 
-
         if self.dev.get() == 'False':
             self.frames[5].place(x=210, y=0)
 
@@ -209,6 +215,28 @@ class Gui(customtkinter.CTk):
 
             self.dev.set(self.DEV[1])
 
+    def changeSize(self):
+
+        if self.msize.get() == 'Big':
+
+            self.geometry('700x700')
+            self.frames[3].configure(height=180)
+            self.frames[4].configure(height=180)
+            self.labels[9].place(y=140)
+            self.labels[8].place(y=110)
+            self.frames[5].configure(height=0)
+
+            self.msize.set(self.SIZES[0])
+        else:
+
+            self.geometry('700x800')
+            self.frames[3].configure(height=280)
+            self.frames[4].configure(height=280)
+            self.labels[9].place(y=240)
+            self.labels[8].place(y=210)
+            self.frames[5].configure(height=270)
+
+            self.msize.set(self.SIZES[1])
 
     def createLabel(self, master, x, y, text, fontsize, row=False):
         object = customtkinter.CTkLabel(master=master, text=text, font=(self.font, fontsize), anchor='w')
@@ -248,7 +276,6 @@ class Gui(customtkinter.CTk):
     def createCon(self, master, x, y, w, h):
         object = customtkinter.CTkScrollableFrame(master=master, width=w, height=h, label_anchor='e')
         self.frames.append(object)
-
 
     def run(self):
         self.protocol("WM_DELETE_WINDOW", self.onClose)
